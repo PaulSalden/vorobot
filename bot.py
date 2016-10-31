@@ -1,4 +1,6 @@
-import logging, select, socket
+import logging
+import select
+import socket
 from config import settings as defaultsettings
 from errno import WSAEWOULDBLOCK#EINPROGRESS
 from strings import encode, decode
