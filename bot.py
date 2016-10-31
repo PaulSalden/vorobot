@@ -105,15 +105,15 @@ class Bot(object):
         self.send("NICK {}".format(self.settings['desired_nick']))
 
     def loop(self):
-        input = [self.s]
-        exception = [self.s]
+        inputtest = [self.s]
+        excepttest = inputtest
 
         # the main loop
         while True:
-            output = [self.s] if self.send_queue else []
+            outputtest = [self.s] if self.send_queue else []
             timeout = self.process_timers()
 
-            inputready, outputready, exceptready = select.select(input, output, exception, timeout)
+            inputready, outputready, exceptready = select.select(inputtest, outputtest, excepttest, timeout)
 
             if exceptready:
                 # assume fatal error
