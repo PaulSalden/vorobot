@@ -1,5 +1,5 @@
 import logging, select, socket
-from config import settings as default
+from config import settings as defaultsettings
 from errno import WSAEWOULDBLOCK#EINPROGRESS
 from strings import encode, decode
 
@@ -134,4 +134,4 @@ class Bot(object):
                 self.send_lines()
 
 if __name__ == "__main__":
-    bot = Bot(default)
+    bot = Bot(defaultsettings)
