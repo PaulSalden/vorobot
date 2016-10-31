@@ -12,6 +12,8 @@ class Bot(object):
     def __init__(self, settings):
         self.settings = settings
 
+        self.s = None
+
         self.buffer_in = b""
         self.buffer_out = b""
         self.send_queue = []
