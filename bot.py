@@ -1,6 +1,9 @@
 import configparser, logging, select, socket
 from errno import WSAEWOULDBLOCK#EINPROGRESS
 
+# flood control setting
+RECEIVE_QUEUE_SIZE = 1024
+
 def decode(line):
     # try utf-8
     try:
@@ -96,8 +99,9 @@ class Bot(object):
         while self.send_queue and self.allow_send:
             encoded_line = encode("%s\r\n" % self.send_queue[0])
 
-            # interrupt processing once critical amount of bytes sent (should I subtract the length of splidgeploit? is this ok?)
-            if self.bytes_buffered + len(encoded_line) > 1024:
+            # wait for my commands to be processed after I have sent a critical amount of bytes
+            # note: I do not control the amount of bytes the server queues up to send me
+            if self.bytes_buffered + len(encoded_line) > RECEIVE_QUEUE_SIZE:
                 self.allow_send = False
                 logging.info("-> SPLIDGEPLOIT")
                 self.buffer_out += encode("SPLIDGEPLOIT\r\n")
