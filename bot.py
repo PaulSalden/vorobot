@@ -1,25 +1,10 @@
-import configparser, logging, select, socket
-from errno import WSAEWOULDBLOCK#EINPROGRESS
+import logging, select, socket
 from config import settings as default
+from errno import WSAEWOULDBLOCK#EINPROGRESS
+from strings import encode, decode
 
 # flood control setting
 RECEIVE_QUEUE_SIZE = 1024
-
-def decode(line):
-    # try utf-8
-    try:
-        return line.decode("utf-8", "strict")
-    except UnicodeDecodeError:
-        # try iso-8859-1
-        try:
-            return line.decode("iso-8859-1", "strict")
-        except UnicodeDecodeError:
-            logging.warning("Could not decode line.")
-            return None
-
-def encode(line):
-    # encode in utf-8
-    return line.encode("utf-8")
 
 class Bot(object):
     def __init__(self, settings):
