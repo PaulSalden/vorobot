@@ -11,6 +11,7 @@ RECEIVE_QUEUE_SIZE = 1024
 class Bot(object):
     def __init__(self, settings):
         self.settings = settings
+        self.state = {}
 
         self.s = None
 
@@ -55,6 +56,10 @@ class Bot(object):
 
         command = args.pop(0)
 
+        self.basic_responses(command, args)
+        # module responses
+
+    def basic_responses(self, command, args):
         # deal with response to anti-flood check
         if len(args) == 3 and (command, args[1]) == ("421", "SPLIDGEPLOIT"):
             self.bytes_buffered = 0
@@ -64,6 +69,19 @@ class Bot(object):
         # respond to ping
         if command == "PING":
             self.send("PONG :{}".format(args[0]))
+            return
+
+        # make sure initial nickname is obtained
+        if "obtaining_nick" not in self.state:
+            return
+
+        if command == "001":
+            del self.state["obtaining_nick"]
+            return
+
+        if command == "433":
+            self.send("NICK {}".format(args[1] + "`"))
+            return
 
     def send_lines(self):
         while self.send_queue and self.allow_send:
@@ -102,6 +120,7 @@ class Bot(object):
                 return
 
         self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
+        self.state["obtaining_nick"] = True
         self.send("NICK {}".format(self.settings['desired_nick']))
 
     def loop(self):
@@ -143,4 +162,5 @@ def runbot(settings):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     runbot(defaultsettings)
