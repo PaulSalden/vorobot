@@ -8,6 +8,7 @@ from strings import encode, decode
 # flood control setting
 RECEIVE_QUEUE_SIZE = 1024
 
+
 class Bot(object):
     def __init__(self, settings):
         self.settings = settings
