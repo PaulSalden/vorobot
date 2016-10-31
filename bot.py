@@ -100,7 +100,7 @@ class Bot(object):
             encoded_line = encode("%s\r\n" % self.send_queue[0])
 
             # wait for my commands to be processed after I have sent a critical amount of bytes
-            # note: I do not control the amount of bytes the server queues up to send me
+            # note: I do not control the amount of bytes the server separately queues up to send me
             if self.bytes_buffered + len(encoded_line) > RECEIVE_QUEUE_SIZE:
                 self.allow_send = False
                 logging.info("-> SPLIDGEPLOIT")
