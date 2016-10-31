@@ -55,7 +55,7 @@ class Bot(object):
 
         # deal with response to anti-flood check
         if len(args) == 3 and (command, args[1]) == ("421", "SPLIDGEPLOIT"):
-            self.bytes_sent = 0
+            self.bytes_buffered = 0
             self.allow_send = True
             return
 
@@ -132,6 +132,7 @@ class Bot(object):
 
             if outputready:
                 self.send_lines()
+
 
 def runbot(settings):
     bot = Bot(settings)
