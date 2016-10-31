@@ -17,24 +17,6 @@ class Bot(object):
         self.allow_send = True
         self.bytes_buffered = 0
 
-        # connect
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.setblocking(0)
-
-        try:
-            self.s.connect((self.settings['server'], int(self.settings['port'])))
-
-        except socket.error as e:
-            message = e.args[0]
-            if message != WSAEWOULDBLOCK:
-                logging.critical("Could not make connection: {}".format(message))
-                return
-
-        self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
-        self.send("NICK {}".format(self.settings['desired_nick']))
-
-        self.loop()
-
     def process_timers(self):
         # temp
         return None
@@ -102,6 +84,22 @@ class Bot(object):
     def send(self, line):
         self.send_queue.append(line)
 
+    def connect(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.setblocking(0)
+
+        try:
+            self.s.connect((self.settings['server'], int(self.settings['port'])))
+
+        except socket.error as e:
+            message = e.args[0]
+            if message != WSAEWOULDBLOCK:
+                logging.critical("Could not make connection: {}".format(message))
+                return
+
+        self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
+        self.send("NICK {}".format(self.settings['desired_nick']))
+
     def loop(self):
         input = [self.s]
         exception = [self.s]
@@ -133,5 +131,10 @@ class Bot(object):
             if outputready:
                 self.send_lines()
 
+def runbot(settings):
+    bot = Bot(settings)
+    bot.connect()
+    bot.loop()
+
 if __name__ == "__main__":
-    bot = Bot(defaultsettings)
+    runbot(defaultsettings)
