@@ -2,12 +2,11 @@ import logging
 import select
 import socket
 from config import settings as defaultsettings
-from errno import WSAEWOULDBLOCK  # EINPROGRESS
+from errno import WSAEWOULDBLOCK#EINPROGRESS
 from strings import encode, decode
 
 # flood control setting
 RECEIVE_QUEUE_SIZE = 1024
-
 
 class Bot(object):
     def __init__(self, settings):
@@ -105,48 +104,43 @@ class Bot(object):
         self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
         self.send("NICK {}".format(self.settings['desired_nick']))
 
-    def cycle(self, readable, writable, exception):
-        if exception:
-            # assume fatal error
-            logging.critical("Fatal error returned by select().")
-            self.s.close()
-            return False
+    def loop(self):
+        inputtest = [self.s]
+        excepttest = inputtest
 
-        if readable:
-            received = self.s.recv(8192)
+        # the main loop
+        while True:
+            outputtest = [self.s] if self.send_queue else []
+            timeout = self.process_timers()
 
-            if not received:
-                # assume disconnect
-                logging.critical("Disconnected.")
+            inputready, outputready, exceptready = select.select(inputtest, outputtest, excepttest, timeout)
+
+            if exceptready:
+                # assume fatal error
+                logging.critical("Fatal error returned by select().")
                 self.s.close()
-                return False
+                break
 
-            self.split_received(received)
+            if inputready:
+                received = self.s.recv(8192)
 
-        if writable:
-            self.send_lines()
+                if not received:
+                    # assume disconnect
+                    logging.critical("Disconnected.")
+                    self.s.close()
+                    break
 
-        return True
+                self.split_received(received)
+
+            if outputready:
+                self.send_lines()
 
 
-def botloop(bot):
-    # not part of the Bot class since select() may process multiple sockets simultaneously
-    inputtest = [bot.s]
-    excepttest = inputtest
-
-    while True:
-        outputtest = [bot.s] if bot.send_queue else []
-        timeout = bot.process_timers()
-
-        readylists = select.select(inputtest, outputtest, excepttest, timeout)
-
-        alive = bot.cycle(*readylists)
-
-        if not alive:
-            break
+def runbot(settings):
+    bot = Bot(settings)
+    bot.connect()
+    bot.loop()
 
 
 if __name__ == "__main__":
-    b = Bot(defaultsettings)
-    b.connect()
-    botloop(b)
+    runbot(defaultsettings)
