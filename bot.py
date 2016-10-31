@@ -1,0 +1,149 @@
+import configparser, logging, select, socket
+from errno import WSAEWOULDBLOCK#EINPROGRESS
+
+def decode(line):
+    # try utf-8
+    try:
+        return line.decode("utf-8", "strict")
+    except UnicodeDecodeError:
+        # try iso-8859-1
+        try:
+            return line.decode("iso-8859-1", "strict")
+        except UnicodeDecodeError:
+            logging.warning("Could not decode line.")
+            return None
+
+def encode(line):
+    # encode in utf-8
+    return line.encode("utf-8")
+
+class Bot(object):
+    def __init__(self, configfile):
+        self.config = configparser.ConfigParser()
+        self.config.read(configfile)
+        self.settings = dict(self.config.items('settings'))
+
+        self.buffer_in = b""
+        self.buffer_out = b""
+        self.send_queue = []
+
+        self.allow_send = True
+        self.bytes_buffered = 0
+
+        # connect
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.setblocking(0)
+
+        try:
+            self.s.connect((self.settings['server'], int(self.settings['port'])))
+
+        except socket.error as e:
+            message = e.args[0]
+            if message != WSAEWOULDBLOCK:
+                logging.critical("Could not make connection: {}".format(message))
+                return
+
+        self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
+        self.send("NICK {}".format(self.settings['desired_nick']))
+
+        self.loop()
+
+    def process_timers(self):
+        # temp
+        return None
+
+    def split_received(self, data):
+        self.buffer_in += data
+        encoded_lines = self.buffer_in.split(b"\r\n")
+        # leave incomplete lines in buffer
+        self.buffer_in = encoded_lines.pop(-1)
+
+        for encoded_line in encoded_lines:
+            line = decode(encoded_line)
+            self.handle_line(line)
+
+    def handle_line(self, line):
+        logging.info("<- {}".format(line))
+
+        # split up line in prefix, command, args
+        prefix = ''
+        trailing = []
+
+        if line[0] == ':':
+            prefix, line = line[1:].split(' ', 1)
+
+        if line.find(' :') != -1:
+            line, trailing = line.split(' :', 1)
+            args = line.split()
+            args.append(trailing)
+
+        else:
+            args = line.split()
+
+        command = args.pop(0)
+
+        # deal with response to anti-flood check
+        if len(args) == 3 and (command, args[1]) == ("421", "SPLIDGEPLOIT"):
+            self.bytes_sent = 0
+            self.allow_send = True
+            return
+
+        # respond to ping
+        if command == "PING":
+            self.send("PONG :{}".format(args[0]))
+
+    def send_lines(self):
+        while self.send_queue and self.allow_send:
+            encoded_line = encode("%s\r\n" % self.send_queue[0])
+
+            # interrupt processing once critical amount of bytes sent (should I subtract the length of splidgeploit? is this ok?)
+            if self.bytes_buffered + len(encoded_line) > 1024:
+                self.allow_send = False
+                logging.info("-> SPLIDGEPLOIT")
+                self.buffer_out += encode("SPLIDGEPLOIT\r\n")
+
+            else:
+                logging.info("-> {}".format(self.send_queue.pop(0)))
+                self.buffer_out += encoded_line
+                self.bytes_buffered += len(encoded_line)
+
+        # send as much of buffer as possible
+        sent = self.s.send(self.buffer_out)
+        self.buffer_out = self.buffer_out[sent:]
+
+    def send(self, line):
+        self.send_queue.append(line)
+
+    def loop(self):
+        input = [self.s]
+        exception = [self.s]
+
+        # the main loop
+        while True:
+            output = [self.s] if self.send_queue else []
+            timeout = self.process_timers()
+
+            inputready, outputready, exceptready = select.select(input, output, exception, timeout)
+
+            if exceptready:
+                # assume fatal error
+                logging.critical("Fatal error returned by select().")
+                self.s.close()
+                break
+
+            if inputready:
+                received = self.s.recv(8192)
+
+                if not received:
+                    # assume disconnect
+                    logging.critical("Disconnected.")
+                    self.s.close()
+                    break
+
+                self.split_received(received)
+
+            if outputready:
+                self.send_lines()
+
+if __name__ == "__main__":
+    bot = Bot("vorobot.cfg")
