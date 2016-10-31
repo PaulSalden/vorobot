@@ -1,5 +1,6 @@
 import configparser, logging, select, socket
 from errno import WSAEWOULDBLOCK#EINPROGRESS
+from config import settings as default
 
 # flood control setting
 RECEIVE_QUEUE_SIZE = 1024
@@ -21,10 +22,8 @@ def encode(line):
     return line.encode("utf-8")
 
 class Bot(object):
-    def __init__(self, configfile):
-        self.config = configparser.ConfigParser()
-        self.config.read(configfile)
-        self.settings = dict(self.config.items('settings'))
+    def __init__(self, settings):
+        self.settings = settings
 
         self.buffer_in = b""
         self.buffer_out = b""
@@ -150,4 +149,4 @@ class Bot(object):
                 self.send_lines()
 
 if __name__ == "__main__":
-    bot = Bot("vorobot.cfg")
+    bot = Bot(default)
