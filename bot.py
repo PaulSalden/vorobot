@@ -14,7 +14,7 @@ RECEIVE_QUEUE_SIZE = 1024
 class Bot(object):
     def __init__(self, settings):
         self.settings = settings
-        self.state = {}
+        self.store = {}
         self.timers = timers.TimerSet()
 
         self.s = None
@@ -25,6 +25,8 @@ class Bot(object):
 
         self.allow_send = True
         self.bytes_buffered = 0
+
+        self.connect_success = False
 
     def process_timers(self):
         return self.timers.process()
@@ -75,11 +77,11 @@ class Bot(object):
             return
 
         # make sure initial nickname is obtained
-        if self.state["connect_success"]:
+        if self.connect_success:
             return
 
         if command == "001":
-            self.state["connect_success"] = True
+            self.connect_success = True
             return
 
         if command == "433":
@@ -122,7 +124,7 @@ class Bot(object):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.setblocking(0)
 
-        self.state["connect_success"] = False
+        self.connect_success = False
 
         try:
             self.s.connect((self.settings['server'], int(self.settings['port'])))
@@ -152,7 +154,7 @@ class Bot(object):
                 self.mainloop()
 
             # exponentially delay reconnect if previous attempt(s) was/were unsuccessful
-            if self.state["connect_success"]:
+            if self.connect_success:
                 failed = 0
                 logging.info("Reconnecting.")
 
