@@ -1,6 +1,7 @@
 import logging
 import select
 import socket
+import time
 import timers
 from config import settings as defaultsettings
 from errno import WSAEWOULDBLOCK  # EINPROGRESS
@@ -74,11 +75,11 @@ class Bot(object):
             return
 
         # make sure initial nickname is obtained
-        if "obtaining_nick" not in self.state:
+        if self.state["connect_success"]:
             return
 
         if command == "001":
-            del self.state["obtaining_nick"]
+            self.state["connect_success"] = True
             return
 
         if command == "433":
@@ -109,8 +110,19 @@ class Bot(object):
         self.send_queue.append(line)
 
     def connect(self):
+        # make sure queues, buffers, etc. are reset
+        self.buffer_in = b""
+        self.buffer_out = b""
+        self.send_queue = []
+
+        self.allow_send = True
+        self.bytes_buffered = 0
+
+        # create socket
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.setblocking(0)
+
+        self.state["connect_success"] = False
 
         try:
             self.s.connect((self.settings['server'], int(self.settings['port'])))
@@ -119,10 +131,9 @@ class Bot(object):
             message = e.args[0]
             if message != WSAEWOULDBLOCK:
                 logging.critical("Could not make connection: {}".format(message))
-                return
+                return False
 
         self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
-        self.state["obtaining_nick"] = True
         self.send("NICK {}".format(self.settings['desired_nick']))
 
         # TEMP
@@ -130,11 +141,31 @@ class Bot(object):
             self.send("JOIN #pwnagedeluxe")
         self.timers.addtimer("join", 10, 1, joinchan)
 
-    def loop(self):
+        return True
+
+    def connectloop(self):
+        failed = 0
+        # keep on trying to connect
+        while True:
+            # try to connect and loop while connected
+            if self.connect():
+                self.mainloop()
+
+            # exponentially delay reconnect if previous attempt(s) was/were unsuccessful
+            if self.state["connect_success"]:
+                failed = 0
+                logging.info("Reconnecting.")
+
+            else:
+                failed += 1
+                delay = 10**failed
+                logging.info("Reconnecting in {} seconds.".format(delay))
+                time.sleep(delay)
+
+    def mainloop(self):
         inputtest = [self.s]
         excepttest = inputtest
 
-        # the main loop
         while True:
             outputtest = [self.s] if self.send_queue else []
             timeout = self.process_timers()
@@ -164,8 +195,7 @@ class Bot(object):
 
 def runbot(settings):
     bot = Bot(settings)
-    bot.connect()
-    bot.loop()
+    bot.connectloop()
 
 
 if __name__ == "__main__":
