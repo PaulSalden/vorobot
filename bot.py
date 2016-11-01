@@ -1,6 +1,7 @@
 import logging
 import select
 import socket
+import timers
 from config import settings as defaultsettings
 from errno import WSAEWOULDBLOCK  # EINPROGRESS
 from strings import encode, decode
@@ -13,6 +14,7 @@ class Bot(object):
     def __init__(self, settings):
         self.settings = settings
         self.state = {}
+        self.timers = timers.TimerSet()
 
         self.s = None
 
@@ -24,8 +26,7 @@ class Bot(object):
         self.bytes_buffered = 0
 
     def process_timers(self):
-        # temp
-        return None
+        return self.timers.process()
 
     def split_received(self, data):
         self.buffer_in += data
@@ -124,6 +125,11 @@ class Bot(object):
         self.state["obtaining_nick"] = True
         self.send("NICK {}".format(self.settings['desired_nick']))
 
+        # TEMP
+        def joinchan():
+            self.send("JOIN #pwnagedeluxe")
+        self.timers.addtimer("join", 10, 1, joinchan)
+
     def loop(self):
         inputtest = [self.s]
         excepttest = inputtest
@@ -163,5 +169,5 @@ def runbot(settings):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     runbot(defaultsettings)
