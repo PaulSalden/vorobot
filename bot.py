@@ -14,7 +14,7 @@ RECEIVE_QUEUE_SIZE = 1024
 class Bot(object):
     def __init__(self, settings):
         self.settings = settings
-        self.store = {}
+        self.variables = {}
         self.timers = timers.TimerSet()
 
         self.s = None
