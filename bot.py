@@ -2,6 +2,7 @@ import logging
 import select
 import socket
 import time
+import modules
 import timers
 from config import settings as defaultsettings
 from errno import WSAEWOULDBLOCK  # EINPROGRESS
@@ -16,6 +17,7 @@ class Bot(object):
         self.settings = settings
         self.variables = {}
         self.timers = timers.TimerSet()
+        self.moduleset = modules.ModuleSet(self.send, self.variables)
 
         self.s = None
 
@@ -62,7 +64,7 @@ class Bot(object):
         command = args.pop(0)
 
         self.basic_responses(command, args)
-        # module responses
+        self.moduleset.process(prefix, command, args)
 
     def basic_responses(self, command, args):
         # deal with response to anti-flood check
@@ -138,12 +140,11 @@ class Bot(object):
         self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
         self.send("NICK {}".format(self.settings['desired_nick']))
 
-        # TEMP
-        def joinchan():
-            self.send("JOIN #pwnagedeluxe")
-        self.timers.addtimer("join", 10, 1, joinchan)
-
         return True
+
+    def loadmodules(self):
+        for m in self.settings["modules"]:
+            self.moduleset.loadmodule(m)
 
     def connectloop(self):
         failed = 0
@@ -152,6 +153,9 @@ class Bot(object):
             # try to connect and loop while connected
             if self.connect():
                 self.mainloop()
+
+            # call onbotquit() for all loaded modules
+            self.moduleset.process("", "BOTQUIT", "")
 
             # exponentially delay reconnect if previous attempt(s) was/were unsuccessful
             if self.connect_success:
@@ -197,6 +201,7 @@ class Bot(object):
 
 def runbot(settings):
     bot = Bot(settings)
+    bot.loadmodules()
     bot.connectloop()
 
 

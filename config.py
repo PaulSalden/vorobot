@@ -3,5 +3,6 @@ settings = {
     "port": 6667,
     "username": "vorobot",
     "realname": "vorobot",
-    "desired_nick": "myvorobot",
+    "desired_nick": "vorobot",
+    "modules": [],
 }
