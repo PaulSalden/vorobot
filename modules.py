@@ -58,7 +58,7 @@ class ModuleSet(object):
     def process(self, prefix, command, args):
         for n, r in self.remotes.items():
             try:
-                r.process(prefix, command, args)
+                r.process_(prefix, command, args)
             except Exception as e:
                 logging.warning("Could not process command {!r} for module {!r}: {}".format(command, n, e))
 
@@ -71,7 +71,7 @@ class Module(object):
         # allow modules to load/unload modules
         self.moduleset = moduleset
 
-    def process(self, prefix, command, args):
+    def process_(self, prefix, command, args):
         # distribute to appropriate methods here, deal with custom BOTQUIT command
         pass
 
@@ -80,3 +80,5 @@ class Module(object):
     def onunload(self): pass
 
     def onbotquit(self): pass
+
+    # deal with raw and timer
