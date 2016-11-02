@@ -16,8 +16,11 @@ class CommandSet(object):
 
     # --- specialized commands ---
 
-    def join(self, channels, keys):
-        self.send("JOIN {} {}".format(channels, keys))
+    def join(self, channels, keys=None):
+        if keys:
+            self.send("JOIN {} {}".format(channels, keys))
+        else:
+            self.send("JOIN {}".format(channels))
 
     def msg(self, target, msg):
         self.send("PRIVMSG {} :{}".format(target, msg))

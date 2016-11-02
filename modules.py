@@ -17,7 +17,7 @@ class ModuleSet(object):
         # import python module
         if module not in self.modules:
             try:
-                self.modules[module] = __import__(MODULEPATH + module)
+                self.modules[module] = importlib.import_module(MODULEPATH + module)
             except Exception as e:
                 warning = "Could not import module !r}: {}".format(module, e)
                 logging.warning(warning)
