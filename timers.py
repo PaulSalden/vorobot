@@ -15,7 +15,10 @@ class TimerSet(object):
                 return self.timers[i].secsremaining()
 
             logging.debug("Executing timer {!r} ".format(self.timers[i].getname()))
-            self.timers[i].docommand()
+            try:
+                self.timers[i].docommand()
+            except Exception as e:
+                logging.warning("Failed to execute timer {!r}: {}".format(self.timers[i].getname(), e))
             name, delay, reps, command = self.timers.pop(i).getdata()
 
             if reps > 0:
