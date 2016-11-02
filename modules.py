@@ -20,26 +20,35 @@ class ModuleSet(object):
             try:
                 self.modules[module] = __import__(MODULEPATH + module)
             except Exception as e:
-                logging.warning("Could not import module !r}: {}".format(module, e))
-                return
+                warning = "Could not import module !r}: {}".format(module, e)
+                logging.warning(warning)
+                return warning
         else:
             try:
                 importlib.reload(self.modules[module])
             except Exception as e:
-                logging.warning("Could not reload module {!r}: {}".format(module, e))
+                warning = "Could not reload module {!r}: {}".format(module, e)
+                logging.warning(warning)
+                return warning
 
         # instantiate and store Remote object
         try:
             self.remotes[module] = self.modules[module].Remote(self.cmd, self.variables, self)
             logging.info("Loaded module {!r}.".format(module))
         except Exception as e:
-            logging.warning("Could not instantiate Remote object from module {!r}: {}".format(module, e))
+            warning = "Could not instantiate Remote object from module {!r}: {}".format(module, e)
+            logging.warning(warning)
+            return warning
 
         # execute onload()
         try:
             self.remotes[module].onload()
         except Exception as e:
-            logging.warning("Could not execute onload() for module {!r}: {}".format(module, e))
+            warning = "Could not execute onload() for module {!r}: {}".format(module, e)
+            logging.warning(warning)
+            return warning
+
+        return True
 
     def unloadmodule(self, module):
         # module stays imported
@@ -48,12 +57,16 @@ class ModuleSet(object):
             try:
                 self.remotes[module].onunload()
             except Exception as e:
-                logging.warning("Could not execute onunload() for module {!r}: {}".format(module, e))
+                warning = "Could not execute onunload() for module {!r}: {}".format(module, e)
+                logging.warning(warning)
+                return warning
 
             del self.remotes[module]
             logging.info("Unloaded module {!r}.".format(module))
         else:
-            logging.warning("No module {!r} for unloading.".format(module))
+            warning = "No module {!r} for unloading.".format(module)
+            logging.warning(warning)
+            return warning
 
     def process(self, prefix, command, args):
         for n, r in self.remotes.items():
