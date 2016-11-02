@@ -3,7 +3,7 @@ class CommandSet(object):
         self.send = sendcommand
         self.timers = timers
 
-    # --- basis commands ---
+    # --- basic commands ---
 
     def timer(self, name, delay, reps, command):
         self.timers.addtimer(name, delay, reps, command)
