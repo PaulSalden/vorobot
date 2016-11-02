@@ -3,7 +3,6 @@ import select
 import socket
 import time
 import modules
-import timers
 from config import settings as defaultsettings
 from errno import WSAEWOULDBLOCK  # EINPROGRESS
 from strings import encode, decode
@@ -15,8 +14,7 @@ RECEIVE_QUEUE_SIZE = 1024
 class Bot(object):
     def __init__(self, settings):
         self.settings = settings
-        self.timers = timers.TimerSet()
-        self.moduleset = modules.ModuleSet(self.timers, self.send)
+        self.moduleset = modules.ModuleSet(self.send)
 
         self.s = None
 
@@ -30,7 +28,7 @@ class Bot(object):
         self.connect_success = False
 
     def process_timers(self):
-        return self.timers.process()
+        return self.moduleset.processtimers()
 
     def split_received(self, data):
         self.buffer_in += data

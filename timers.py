@@ -33,7 +33,7 @@ class TimerSet(object):
         # no timers left, so no timeout required
         return None
 
-    def addtimer(self, name, delay, reps, command):
+    def add(self, name, delay, reps, command):
         logging.debug("Adding timer {!r} with {} seconds delay and {} repetitions.".format(name, delay, reps))
         time = datetime.datetime.now() + datetime.timedelta(seconds=delay)
 
@@ -50,7 +50,7 @@ class TimerSet(object):
 
         return True
 
-    def deltimer(self, name):
+    def delete(self, name):
         logging.debug("Deleting timer {!r}.".format(name))
         for i in range(len(self.timers)):
             if self.timers[i].isnamed(name):

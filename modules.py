@@ -1,17 +1,20 @@
 import importlib
 import logging
 import commands
+import timers
 
 MODULEPATH = "remote."
 
 
 class ModuleSet(object):
-    def __init__(self, timers, send):
-        self.variables = {}
-        self.cmd = commands.CommandSet(send, timers)
-
+    def __init__(self, send):
         self.modules = {}
         self.remotes = {}
+
+        self.cmd = commands.CommandSet(send)
+        self.timers = timers.TimerSet()
+        self.aliases = {}
+        self.variables = {}
 
     def loadmodule(self, module):
         # allows for reloading too!
@@ -75,6 +78,9 @@ class ModuleSet(object):
                 r.process_(prefix, command, args)
             except Exception as e:
                 logging.warning("Could not process command {!r} for module {!r}: {}".format(command, n, e))
+
+    def processtimers(self):
+        return self.timers.process()
 
 
 class Module(object):
