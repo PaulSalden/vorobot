@@ -2,7 +2,6 @@ import logging
 import select
 import socket
 import time
-import commands
 import modules
 import timers
 from config import settings as defaultsettings
@@ -16,10 +15,8 @@ RECEIVE_QUEUE_SIZE = 1024
 class Bot(object):
     def __init__(self, settings):
         self.settings = settings
-        self.variables = {}
         self.timers = timers.TimerSet()
-        c = commands.CommandSet(self.send, self.timers)
-        self.moduleset = modules.ModuleSet(c, self.variables)
+        self.moduleset = modules.ModuleSet(self.timers, self.send)
 
         self.s = None
 
