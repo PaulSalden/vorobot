@@ -48,14 +48,17 @@ class TimerSet(object):
         if not inserted:
             self.timers.append(Timer(name, time, delay, reps, command))
 
+        return True
+
     def deltimer(self, name):
         logging.debug("Deleting timer {!r}.".format(name))
         for i in range(len(self.timers)):
             if self.timers[i].isnamed(name):
                 self.timers.pop(i)
-                return
+                return True
 
         logging.warning("Timer {!r} not found.".format(name))
+        return False
 
 
 class Timer(object):
