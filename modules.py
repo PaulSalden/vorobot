@@ -82,8 +82,8 @@ class ModuleSet(object):
     def processtimers(self):
         return self.timers.process()
 
-    def signal(self, args):
-        self.process("", "_SIGNAL", args)
+    def signal(self, name, args):
+        self.process("{}!".format(name), "_SIGNAL", args)
 
 
 class Module(object):
@@ -120,7 +120,7 @@ class Module(object):
 
     def ondisconnect(self, *args): pass
 
-    def onsignal(self, args): pass
+    def onsignal(self, name, args): pass
 
     # --- IRC events ---
 
