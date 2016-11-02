@@ -1,4 +1,3 @@
-import commands
 import importlib
 import logging
 
@@ -6,8 +5,8 @@ MODULEPATH = "remote."
 
 
 class ModuleSet(object):
-    def __init__(self, sendcommand, variables):
-        self.cmd = commands.CommandSet(sendcommand)
+    def __init__(self, cmd, variables):
+        self.cmd = cmd
         self.variables = variables
         self.modules = {}
         self.remotes = {}

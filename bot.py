@@ -2,6 +2,7 @@ import logging
 import select
 import socket
 import time
+import commands
 import modules
 import timers
 from config import settings as defaultsettings
@@ -17,7 +18,8 @@ class Bot(object):
         self.settings = settings
         self.variables = {}
         self.timers = timers.TimerSet()
-        self.moduleset = modules.ModuleSet(self.send, self.variables)
+        c = commands.CommandSet(self.send, self.timers)
+        self.moduleset = modules.ModuleSet(c, self.variables)
 
         self.s = None
 
