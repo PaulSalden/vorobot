@@ -13,7 +13,7 @@ class ModuleSet(object):
         self.remotes = {}
 
     def loadmodule(self, module):
-        # allow for reloading too!
+        # allows for reloading too!
 
         # import python module
         if module not in self.modules:
