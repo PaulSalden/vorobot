@@ -82,6 +82,9 @@ class ModuleSet(object):
     def processtimers(self):
         return self.timers.process()
 
+    def signal(self, args):
+        self.process("", "_SIGNAL", args)
+
 
 class Module(object):
     # module blueprint
@@ -94,7 +97,8 @@ class Module(object):
         self.irc_events = {
             "PRIVMSG": self.ontext,
             "001": self.onconnect,
-            "BOTQUIT": self.ondisconnect,
+            "_BOTQUIT": self.ondisconnect,
+            "_SIGNAL": self.onsignal,
         }
 
     def process_(self, prefix, command, args):
@@ -115,6 +119,8 @@ class Module(object):
     def onunload(self): pass
 
     def ondisconnect(self, *args): pass
+
+    def onsignal(self, args): pass
 
     # --- IRC events ---
 

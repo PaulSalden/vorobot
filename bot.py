@@ -152,7 +152,7 @@ class Bot(object):
                 self.mainloop()
 
             # call onbotquit() for all loaded modules
-            self.moduleset.process("", "BOTQUIT", "")
+            self.moduleset.process("", "_BOTQUIT", "")
 
             # exponentially delay reconnect if previous attempt(s) was/were unsuccessful
             if self.connect_success:
