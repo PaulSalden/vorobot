@@ -83,9 +83,27 @@ class Module(object):
         # allow modules to load/unload modules
         self.moduleset = moduleset
 
+        self.irc_events = {
+            "PRIVMSG": self.ontext,
+            "001": self.onconnect,
+        }
+
     def process_(self, prefix, command, args):
-        # distribute to appropriate methods here, deal with custom BOTQUIT command
-        pass
+        if command == "BOTQUIT":
+            self.onbotquit()
+            return
+
+        self.onraw(prefix, command, args)
+
+        if command in self.irc_events:
+            if "!" in prefix:
+                # if a nickname is present, send it along
+                nick = prefix.split("!")[0]
+                self.irc_events[command](nick, *args)
+            else:
+                self.irc_events[command](*args)
+
+    # --- internal events ---
 
     def onload(self): pass
 
@@ -93,4 +111,10 @@ class Module(object):
 
     def onbotquit(self): pass
 
-    # deal with raw and timer
+    # --- IRC events ---
+
+    def onraw(self, prefix, command, args): pass
+
+    def onconnect(self, *args): pass
+
+    def ontext(self, nick, target, msg): pass
