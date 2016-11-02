@@ -94,13 +94,10 @@ class Module(object):
         self.irc_events = {
             "PRIVMSG": self.ontext,
             "001": self.onconnect,
+            "BOTQUIT": self.ondisconnect,
         }
 
     def process_(self, prefix, command, args):
-        if command == "BOTQUIT":
-            self.onbotquit()
-            return
-
         self.onraw(prefix, command, args)
 
         if command in self.irc_events:
@@ -117,7 +114,7 @@ class Module(object):
 
     def onunload(self): pass
 
-    def onbotquit(self): pass
+    def ondisconnect(self, *args): pass
 
     # --- IRC events ---
 
