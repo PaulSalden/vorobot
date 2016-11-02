@@ -56,8 +56,11 @@ class ModuleSet(object):
             logging.warning("No module {!r} for unloading.".format(module))
 
     def process(self, prefix, command, args):
-        for r in self.remotes:
-            r.process(prefix, command, args)
+        for n, r in self.remotes.items():
+            try:
+                r.process(prefix, command, args)
+            except Exception as e:
+                logging.warning("Could not process command {!r} for module {!r}: {}".format(command, n, e))
 
 
 class Module(object):
