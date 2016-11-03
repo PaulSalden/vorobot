@@ -95,7 +95,16 @@ class Module(object):
         self.moduleset = moduleset
 
         self.irc_events = {
+            "INVITE": self.oninvite,
+            "JOIN": self.onjoin,
+            "KICK": self.onkick,
+            "MODE": self.onmode,
+            "NICK": self.onnick,
+            "NOTICE": self.onnotice,
+            "PART": self.onpart,
             "PRIVMSG": self.ontext,
+            "QUIT": self.onquit,
+            "TOPIC": self.ontopic,
             "001": self.onconnect,
             "_BOTQUIT": self.ondisconnect,
             "_SIGNAL": self.onsignal,
@@ -128,4 +137,22 @@ class Module(object):
 
     def onconnect(self, *args): pass
 
+    def oninvite(self, nick, target, channel): pass
+
+    def onjoin(self, nick, channel): pass
+
+    def onkick(self, nick, channel, target, msg=None): pass
+
+    def onmode(self, nick, channel, modes): pass
+
+    def onnick(self, oldnick, nick): pass
+
+    def onnotice(self, nick, target, msg): pass
+
+    def onpart(self, nick, channel, msg=None): pass
+
+    def onquit(self, nick, msg): pass
+
     def ontext(self, nick, target, msg): pass
+
+    def ontopic(self, nick, channel, topic): pass
