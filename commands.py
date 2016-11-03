@@ -73,6 +73,12 @@ class CommandSet(object):
     def version(self):
         self.raw("VERSION")
 
+    def wallops(self, msg):
+        self.raw("WALLOPS :{}".format(msg))
+
+    def wallusers(self, msg):
+        self.raw("WALLUSERS :{}".format(msg))
+
     def who(self, nicks, flags=None):
         if flags:
             self.raw("WHO {} {}".format(nicks, flags))

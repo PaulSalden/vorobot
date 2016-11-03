@@ -165,3 +165,5 @@ class Module(object):
     def ontext(self, nick, address, target, msg): pass
 
     def ontopic(self, nick, address, channel, topic): pass
+
+    def onwallops(self, nick, address, msg): pass
