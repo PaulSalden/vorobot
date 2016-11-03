@@ -86,6 +86,17 @@ class ModuleSet(object):
         self.process("{}!".format(name), "_SIGNAL", args)
 
 
+def ctcpsplit(msg):
+    if msg[0] != "\001" or msg[-1] != "\001":
+        return ()
+
+    splitmsg = msg[1:-1].split(" ", 1)
+    request = splitmsg[0]
+    msg = " ".join(splitmsg[1:])
+
+    return request, msg
+
+
 class Module(object):
     # module blueprint
     def __init__(self, cmd, variables, moduleset):
@@ -100,9 +111,9 @@ class Module(object):
             "KICK": self.onkick,
             "MODE": self.onmode,
             "NICK": self.onnick,
-            "NOTICE": self.noticesplit,
+            "NOTICE": self.relaynotice,
             "PART": self.onpart,
-            "PRIVMSG": self.ontext,
+            "PRIVMSG": self.relaymsg,
             "QUIT": self.onquit,
             "TOPIC": self.ontopic,
             "001": self.onconnect,
@@ -121,10 +132,34 @@ class Module(object):
             else:
                 self.irc_events[command](*args)
 
-    def noticesplit(self, *args):
-        # distinguish between server and user notices
+    def relaymsg(self, *args):
+        # distinguish between ctcp requests, actions and messages
+        ctcpdata = ctcpsplit(args[-1])
+        if ctcpdata:
+            request, msg = ctcpdata
+
+            if request == "ACTION":
+                newargs = args[:-1]
+                newargs.append(msg)
+                self.onaction(*newargs)
+            else:
+                newargs = args[:-1]
+                newargs.extend(ctcpdata)
+                self.onctcp(*newargs)
+        else:
+            self.ontext(*args)
+
+    def relaynotice(self, *args):
+        # distinguish between server notices, ctcp replies and user notices
         if len(args) == 2:
             self.onsnotice(*args)
+            return
+
+        ctcpdata = ctcpsplit(args[-1])
+        if ctcpdata:
+            newargs = args[:-1]
+            newargs.extend(ctcpdata)
+            self.onctcpreply(*newargs)
         else:
             self.onnotice(*args)
 
@@ -142,7 +177,13 @@ class Module(object):
 
     def onraw(self, prefix, command, args): pass
 
+    def onaction(self, nick, address, target, msg): pass
+
     def onconnect(self, *args): pass
+
+    def onctcp(self, nick, address, target, request, msg): pass
+
+    def onctcpreply(self, nick, address, target, request, msg): pass
 
     def oninvite(self, nick, address, target, channel): pass
 
