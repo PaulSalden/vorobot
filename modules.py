@@ -100,7 +100,7 @@ class Module(object):
             "KICK": self.onkick,
             "MODE": self.onmode,
             "NICK": self.onnick,
-            "NOTICE": self.onnotice,
+            "NOTICE": self.noticesplit,
             "PART": self.onpart,
             "PRIVMSG": self.ontext,
             "QUIT": self.onquit,
@@ -120,6 +120,13 @@ class Module(object):
                 self.irc_events[command](nick, prefix, *args)
             else:
                 self.irc_events[command](*args)
+
+    def noticesplit(self, *args):
+        # distinguish between server and user notices
+        if len(args) == 2:
+            self.onsnotice(*args)
+        else:
+            self.onnotice(*args)
 
     # --- internal events ---
 
@@ -152,6 +159,8 @@ class Module(object):
     def onpart(self, nick, address, channel, msg=None): pass
 
     def onquit(self, nick, address, msg): pass
+
+    def onsnotice(self, target, msg): pass
 
     def ontext(self, nick, address, target, msg): pass
 
