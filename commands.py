@@ -99,8 +99,8 @@ class CommandSet(object):
     def describe(self, target, msg):
         self.msg(target, "\001ACTION {}\001".format(msg))
 
-    def ctcp(self, target, type):
-        self.msg(target, "\001{}\001".format(type.upper()))
+    def ctcp(self, target, request):
+        self.msg(target, "\001{}\001".format(request.upper()))
 
-    def ctcpreply(self, target, type, msg):
-        self.notice(target, "\001{} {}\001".format(type.upper(), msg))
+    def ctcpreply(self, target, request, msg):
+        self.notice(target, "\001{} {}\001".format(request.upper(), msg))
