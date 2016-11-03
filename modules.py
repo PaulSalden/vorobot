@@ -115,9 +115,9 @@ class Module(object):
 
         if command in self.irc_events:
             if "!" in prefix:
-                # if a nickname is present, send it along
+                # if prefix is a user, pass nick and address
                 nick = prefix.split("!")[0]
-                self.irc_events[command](nick, *args)
+                self.irc_events[command](nick, prefix, *args)
             else:
                 self.irc_events[command](*args)
 
@@ -137,22 +137,22 @@ class Module(object):
 
     def onconnect(self, *args): pass
 
-    def oninvite(self, nick, target, channel): pass
+    def oninvite(self, nick, address, target, channel): pass
 
-    def onjoin(self, nick, channel): pass
+    def onjoin(self, nick, address, channel): pass
 
-    def onkick(self, nick, channel, target, msg=None): pass
+    def onkick(self, nick, address, channel, target, msg=None): pass
 
-    def onmode(self, nick, channel, modes): pass
+    def onmode(self, nick, address, channel, modes): pass
 
-    def onnick(self, oldnick, nick): pass
+    def onnick(self, oldnick, oldaddress, nick): pass
 
-    def onnotice(self, nick, target, msg): pass
+    def onnotice(self, nick, address, target, msg): pass
 
-    def onpart(self, nick, channel, msg=None): pass
+    def onpart(self, nick, address, channel, msg=None): pass
 
-    def onquit(self, nick, msg): pass
+    def onquit(self, nick, address, msg): pass
 
-    def ontext(self, nick, target, msg): pass
+    def ontext(self, nick, address, target, msg): pass
 
-    def ontopic(self, nick, channel, topic): pass
+    def ontopic(self, nick, address, channel, topic): pass
