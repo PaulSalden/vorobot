@@ -103,7 +103,8 @@ class Module(object):
         self.cmd = cmd
         self.variables = variables
         # allow modules to load/unload modules
-        self.moduleset = moduleset
+        self.loadmodule = moduleset.loadmodule
+        self.unloadmodule = moduleset.unloadmodule
 
         self.irc_events = {
             "INVITE": self.oninvite,
