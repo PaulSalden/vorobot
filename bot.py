@@ -2,7 +2,7 @@ import logging
 import select
 import socket
 import time
-import modules
+import remotes
 from config import settings as defaultsettings
 from errno import WSAEWOULDBLOCK  # EINPROGRESS
 from strings import encode, decode
@@ -14,7 +14,7 @@ RECEIVE_QUEUE_SIZE = 1024
 class Bot(object):
     def __init__(self, settings):
         self.settings = settings
-        self.moduleset = modules.ModuleSet(self.send)
+        self.remoteset = remotes.RemoteSet(self.send)
 
         self.s = None
 
@@ -28,7 +28,7 @@ class Bot(object):
         self.connect_success = False
 
     def process_timers(self):
-        return self.moduleset.processtimers()
+        return self.remoteset.processtimers()
 
     def split_received(self, data):
         self.buffer_in += data
@@ -61,7 +61,7 @@ class Bot(object):
         command = args.pop(0)
 
         self.basic_responses(command, args)
-        self.moduleset.process(prefix, command, args)
+        self.remoteset.process(prefix, command, args)
 
     def basic_responses(self, command, args):
         # deal with response to anti-flood check
@@ -141,7 +141,7 @@ class Bot(object):
 
     def loadmodules(self):
         for m in self.settings["modules"]:
-            self.moduleset.loadmodule(m)
+            self.remoteset.loadremote(m)
 
     def connectloop(self):
         failed = 0
@@ -152,7 +152,7 @@ class Bot(object):
                 self.mainloop()
 
             # call onbotquit() for all loaded modules
-            self.moduleset.process("", "_BOTQUIT", "")
+            self.remoteset.process("", "_BOTQUIT", "")
 
             # exponentially delay reconnect if previous attempt(s) was/were unsuccessful
             if self.connect_success:
