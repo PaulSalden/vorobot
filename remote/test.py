@@ -6,6 +6,7 @@ class MyRemote(remotes.Remote):
     def connecthandler(self):
         self.cmd.join("#pwnagedeluxe")
 
-    @handlers.ontext(":test", "")
-    def texthandler(self, host, target, msg):
-        self.cmd.msg(target, "hi!")
+    @handlers.ontext(":test", "#")
+    def texthandler(self, nick, target, msg):
+        modestring = "".join(nick.chanmodes(target))
+        self.cmd.msg(target, "hi, your channel modes are: +{}".format(modestring))

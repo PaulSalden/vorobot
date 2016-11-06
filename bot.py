@@ -151,8 +151,8 @@ class Bot(object):
             if self.connect():
                 self.mainloop()
 
-            # call onbotquit() for all loaded modules
-            self.remoteset.process("", "_BOTQUIT", "")
+            # send _DISCONNECT pseudo-command for all loaded modules
+            self.remoteset.process("", "_DISCONNECT", "")
 
             # exponentially delay reconnect if previous attempt(s) was/were unsuccessful
             if self.connect_success:

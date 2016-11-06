@@ -1,7 +1,9 @@
 import re
+import strings
+
 
 def onconnect(handler):
-    def wrapped(self, prefix, command, args):
+    def wrapped(self, userdata, prefix, command, args):
         return handler(self)
 
     wrapped.ishandler = True
@@ -9,11 +11,19 @@ def onconnect(handler):
 
     return wrapped
 
-def ontext(matchtext, target):
+def ontext(textmatch, targetmatch):
     def wrap(handler):
-        def wrapped(self, prefix, command, args):
-            if re.match(target, args[0]) and re.match(matchtext, args[1]):
-                newargs = (self, prefix, args[0], args[1])
+        def wrapped(self, userdata, prefix, command, args):
+            if re.match(targetmatch, args[0]) and re.match(textmatch, args[1]):
+                nick = userdata.getnick(strings.getnick(prefix), prefix)
+
+                if strings.ischannel(args[0]):
+                    target = userdata.getchannel(args[0])
+                else:
+                    target = userdata.getnick(args[0])
+
+                # (self, nick, target, msg)
+                newargs = (self, nick, target, args[1])
                 return handler(*newargs)
 
         wrapped.ishandler = True

@@ -4,12 +4,15 @@ import logging
 import re
 import commands
 import timers
+import userdata
 
 MODULEPATH = "remote."
+
 
 # helper functions
 def isaction(msg):
     return re.match("^\\001ACTION.*\\001$", msg)
+
 
 def isctcp(msg):
     return re.match("^\\001.*\\001$", msg)
@@ -26,6 +29,7 @@ class RemoteSet(object):
         self.timers = timers.TimerSet()
         self.aliases = {}
         self.variables = {}
+        self.userdata = userdata.UserData()
 
     def loadremote(self, modulename, remotenames=None):
         # allows for reloading too!
@@ -150,6 +154,8 @@ class RemoteSet(object):
         logging.info("Unloaded module {!r} / remote {!r}.".format(modulename, remotename))
 
     def process(self, prefix, command, args):
+        self.userdata.process(prefix, command, args)
+
         # properly split up messages and notices
         if command == "PRIVMSG":
             if isaction(args[0]):
@@ -167,7 +173,7 @@ class RemoteSet(object):
                 if "RAW" in handlers:
                     for handler in handlers["RAW"]:
                         try:
-                            handler(prefix, command, args)
+                            handler(self.userdata, prefix, command, args)
                         except Exception as e:
                             msg = "Could not process raw handler for command {!r} in module {!r} / remote {!r}: {}"
                             logging.warning(msg.format(command, modulename, remotename, e))
@@ -176,7 +182,7 @@ class RemoteSet(object):
                 if command in handlers:
                     for handler in handlers[command]:
                         try:
-                            handler(prefix, command, args)
+                            handler(self.userdata, prefix, command, args)
                         except Exception as e:
                             msg = "Could not process command handler for {!r} in module {!r} / remote {!r}: {}"
                             logging.warning(msg.format(command, modulename, remotename, e))
