@@ -38,6 +38,25 @@ def onconnect(handler):
     return wrapped
 
 
+def onjoin(channelmatch):
+    def wrap(handler):
+        def wrapped(self, userdata, prefix, command, args):
+            if not re.match(channelmatch, args[0]):
+                return
+
+            nick = userdata.getnick(strings.getnick(prefix), prefix)
+
+            # (self, nick, channel)
+            newargs = (self, nick, args[0])
+            return handler(*newargs)
+
+        wrapped.ishandler = True
+        wrapped.command = "JOIN"
+        return wrapped
+
+    return wrap
+
+
 def ontext(textmatch, targetmatch):
     def wrap(handler):
         def wrapped(self, userdata, prefix, command, args):
