@@ -1,21 +1,11 @@
 import importlib
 import inspect
 import logging
-import re
 import commands
 import timers
 import userdata
 
 MODULEPATH = "remote."
-
-
-# helper functions
-def isaction(msg):
-    return re.match("^\\001ACTION.*\\001$", msg)
-
-
-def isctcp(msg):
-    return re.match("^\\001.*\\001$", msg)
 
 
 # NOTE: modules are the files remote classes reside in
@@ -155,17 +145,6 @@ class RemoteSet(object):
 
     def process(self, prefix, command, args):
         self.userdata.process(prefix, command, args)
-
-        # properly split up messages and notices
-        if command == "PRIVMSG":
-            if isaction(args[0]):
-                command = "ACTION"
-            elif isctcp(args[0]):
-                command = "CTCP"
-
-        if command == "NOTICE":
-            if isctcp(args[0]):
-                command = "CTCPREPLY"
 
         for modulename, remotedict in self.handlers.items():
             for remotename, handlers in remotedict.items():

@@ -1,5 +1,8 @@
+import re
 import logging
 
+
+# text decoding / encoding
 
 def decode(line):
     # try utf-8
@@ -19,14 +22,28 @@ def encode(line):
     return line.encode("utf-8")
 
 
+# hostmask conversion
+
 def getnick(prefix):
     return prefix.split("!")[0]
+
+
+# sting recognition
+
+def isaction(msg):
+    return re.match("^\\001ACTION.*\\001$", msg)
+
+
+def isctcp(msg):
+    return re.match("^\\001.*\\001$", msg)
 
 
 def ischannel(name):
     channelprefixes = "#&"
     return name[0] in channelprefixes
 
+
+# mode parsing
 
 def parsechannelmodes(modestring, args=None):
     argmodes = "abhkloqv"
