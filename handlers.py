@@ -27,6 +27,7 @@ def raw(numeric, argmatch):
 
     return wrap
 
+
 def onconnect(handler):
     def wrapped(self, userdata, prefix, command, args):
         return handler(self)
