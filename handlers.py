@@ -12,6 +12,21 @@ import strings
 #                 command = "CTCPREPLY"
 
 
+def raw(numeric, argmatch):
+    def wrap(handler):
+        def wrapped(self, userdata, prefix, command, args):
+            if command != numeric or not re.match(argmatch, " ".join(args)):
+                return
+
+            # (self, args1, args2, ...)
+            return handler(*args)
+
+        wrapped.ishandler = True
+        wrapped.command = "RAW"
+        return wrapped
+
+    return wrap
+
 def onconnect(handler):
     def wrapped(self, userdata, prefix, command, args):
         return handler(self)
