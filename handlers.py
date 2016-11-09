@@ -14,22 +14,32 @@ import strings
 
 def raw(numeric, argmatch):
     def wrap(handler):
-        def wrapped(self, userdata, prefix, command, args):
+        def wrapped(self, prefix, command, args):
             if command != numeric or not re.match(argmatch, " ".join(args)):
                 return
 
             # (self, args1, args2, ...)
-            return handler(*args)
+            return handler(self, *args)
 
         wrapped.ishandler = True
-        wrapped.command = "RAW"
+        wrapped.command = "_RAW"
         return wrapped
 
     return wrap
 
 
+def onload(handler):
+    def wrapped(self):
+        return handler(self)
+
+    wrapped.ishandler = True
+    wrapped.command = "_LOAD"
+
+    return wrapped
+
+
 def onconnect(handler):
-    def wrapped(self, userdata, prefix, command, args):
+    def wrapped(self, prefix, command, args):
         return handler(self)
 
     wrapped.ishandler = True
@@ -40,11 +50,11 @@ def onconnect(handler):
 
 def onjoin(channelmatch):
     def wrap(handler):
-        def wrapped(self, userdata, prefix, command, args):
+        def wrapped(self, prefix, command, args):
             if not re.match(channelmatch, args[0]):
                 return
 
-            nick = userdata.getnick(strings.getnick(prefix), prefix)
+            nick = self.id.nick(strings.getnick(prefix), prefix)
 
             # (self, nick, channel)
             newargs = (self, nick, args[0])
@@ -59,19 +69,19 @@ def onjoin(channelmatch):
 
 def ontext(textmatch, targetmatch):
     def wrap(handler):
-        def wrapped(self, userdata, prefix, command, args):
+        def wrapped(self, prefix, command, args):
             if strings.isctcp(args[1]):
                 return
 
             if not (re.match(targetmatch, args[0]) and re.match(textmatch, args[1])):
                 return
 
-            nick = userdata.getnick(strings.getnick(prefix), prefix)
+            nick = self.id.nick(strings.getnick(prefix), prefix)
 
             if strings.ischannel(args[0]):
-                target = userdata.getchannel(args[0])
+                target = self.id.channel(args[0])
             else:
-                target = userdata.getnick(args[0])
+                target = self.id.nick(args[0])
 
             # (self, nick, target, msg)
             newargs = (self, nick, target, args[1])

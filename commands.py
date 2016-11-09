@@ -1,6 +1,7 @@
 class CommandSet(object):
-    def __init__(self, sendcommand):
+    def __init__(self, sendcommand, timers):
         self.send = sendcommand
+        self.timers = timers
 
     def raw(self, command):
         self.send(command)
@@ -79,11 +80,11 @@ class CommandSet(object):
     def wallusers(self, msg):
         self.raw("WALLUSERS :{}".format(msg))
 
-    def who(self, nicks, flags=None):
+    def who(self, targets, flags=None):
         if flags:
-            self.raw("WHO {} {}".format(nicks, flags))
+            self.raw("WHO {} {}".format(targets, flags))
         else:
-            self.raw("WHO {}".format(nicks))
+            self.raw("WHO {}".format(targets))
 
     def whois(self, nicks):
         self.raw("WHOIS {}".format(nicks))
@@ -104,3 +105,11 @@ class CommandSet(object):
 
     def ctcpreply(self, target, request, msg):
         self.notice(target, "\001{} {}\001".format(request.upper(), msg))
+
+    # --- timer commands ---
+
+    def timer(self, *args):
+        self.timers.add(*args)
+
+    def timerdel(self, *args):
+        self.timers.delete(*args)

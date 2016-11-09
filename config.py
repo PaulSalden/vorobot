@@ -4,5 +4,5 @@ settings = {
     "username": "vorobot",
     "realname": "vorobot",
     "desired_nick": "vorobot",
-    "modules": ["test"],
+    "modules": ["quakenet", "test"],
 }

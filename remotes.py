@@ -2,6 +2,7 @@ import importlib
 import inspect
 import logging
 import commands
+import identifiers
 import timers
 import userdata
 
@@ -15,11 +16,12 @@ class RemoteSet(object):
         self.modules = {}
         self.handlers = {}
 
-        self.cmd = commands.CommandSet(send)
         self.timers = timers.TimerSet()
+        self.cmd = commands.CommandSet(send, self.timers)
         self.aliases = {}
         self.variables = {}
         self.userdata = userdata.UserData()
+        self.id = identifiers.IdentifierSet(self.userdata)
 
     def loadremote(self, modulename, remotenames=None):
         # allows for reloading too!
@@ -35,7 +37,9 @@ class RemoteSet(object):
             for cname in dir(module):
                 c = getattr(module, cname)
                 if inspect.isclass(c) and issubclass(c, Remote):  # could use isinstance() but avoiding confusion
-                    remote = c(self.cmd, self.aliases, self.variables)
+                    getnick = self.userdata.getnick
+                    getchannel = self.userdata.getchannel
+                    remote = c(self.cmd, self.id, self.aliases, self.variables)
                     self._loadhandlers(modulename, cname, remote)
                     loadedremotes.append(cname)
         else:
@@ -44,7 +48,9 @@ class RemoteSet(object):
                 if cname in dir(module):
                     c = getattr(module, cname)
                     if inspect.isclass(c) and issubclass(c, Remote):
-                        remote = c(self.cmd, self.aliases, self.variables)
+                        getnick = self.userdata.getnick
+                        getchannel = self.userdata.getchannel
+                        remote = c(self.cmd, self.id, self.aliases, self.variables)
                         self._loadhandlers(modulename, cname, remote)
                         loadedremotes.append(cname)
                         success = True
@@ -149,10 +155,10 @@ class RemoteSet(object):
         for modulename, remotedict in self.handlers.items():
             for remotename, handlers in remotedict.items():
                 # process raw handlers
-                if "RAW" in handlers:
-                    for handler in handlers["RAW"]:
+                if "_RAW" in handlers:
+                    for handler in handlers["_RAW"]:
                         try:
-                            handler(self.userdata, prefix, command, args)
+                            handler(prefix, command, args)
                         except Exception as e:
                             msg = "Could not process raw handler for command {!r} in module {!r} / remote {!r}: {}"
                             logging.warning(msg.format(command, modulename, remotename, e))
@@ -161,7 +167,7 @@ class RemoteSet(object):
                 if command in handlers:
                     for handler in handlers[command]:
                         try:
-                            handler(self.userdata, prefix, command, args)
+                            handler(prefix, command, args)
                         except Exception as e:
                             msg = "Could not process command handler for {!r} in module {!r} / remote {!r}: {}"
                             logging.warning(msg.format(command, modulename, remotename, e))
@@ -175,7 +181,10 @@ class RemoteSet(object):
 
 class Remote(object):
     # remote blueprint
-    def __init__(self, cmd, aliases, variables):
+
+    # not shadowing built-in name id
+    def __init__(self, cmd, ids, aliases, variables):
         self.cmd = cmd
+        self.id = ids
         self.aliases = aliases
         self.variables = variables

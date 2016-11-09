@@ -1,7 +1,7 @@
 import strings
 
-# The bot does not issue a WHO command upon joining a channel, because of ircd-specific syntax. Hosts are
-# therefore not generally available.
+# The bot does not issue a WHO command upon joining a channel, because of ircd-specific syntax. Hosts (and
+# account names) are therefore not generally available.
 
 
 prefixmodes = {
@@ -32,6 +32,9 @@ class UserData(object):
             "_DISCONNECT": self.handledisconnect,
         }
 
+    def getchannels(self):
+        return self.channels.values()
+
     def getchannel(self, channelname):
         if channelname in self.channels:
             return self.channels[channelname]
@@ -43,6 +46,9 @@ class UserData(object):
             return self.nicks[nickname]
 
         return Nick(self, nickname, host)
+
+    def getme(self):
+        return self.getnick(self.me)
 
     def process(self, prefix, command, args):
         # modify channels and nicks if necessary
@@ -66,7 +72,8 @@ class UserData(object):
 
     def removechannel(self, channelname):
         channel = self.channels[channelname]
-        for nick in channel.nicks:
+        for nickname in channel.nicks:
+            nick = self.nicks[nickname]
             nick.channels.remove(channelname)
 
             # remove nicks without common channels
@@ -76,7 +83,8 @@ class UserData(object):
 
     def removenick(self, nickname):
         nick = self.nicks[nickname]
-        for channel in nick.channels:
+        for channelname in nick.channels:
+            channel = self.channels[channelname]
             del channel.nicks[nickname]
         del self.nicks[nickname]
 
@@ -194,6 +202,7 @@ class Nick(object):
         self.name = name
         self.host = host
         self.channels = set()
+        self.account = ""
 
     def __str__(self):
         return self.name
@@ -206,3 +215,6 @@ class Nick(object):
 
     def chanmodes(self, channel):
         return channel.nicks[self.name]
+
+    def isme(self):
+        return self.name == self.userdata.me

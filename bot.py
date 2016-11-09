@@ -170,8 +170,9 @@ class Bot(object):
         excepttest = inputtest
 
         while True:
-            outputtest = [self.s] if self.send_queue else []
+            # start with processing timers, so potential new commands can be sent
             timeout = self.process_timers()
+            outputtest = [self.s] if self.send_queue else []
 
             inputready, outputready, exceptready = select.select(inputtest, outputtest, excepttest, timeout)
 

@@ -8,18 +8,22 @@ class TimerSet(object):
 
     def process(self):
         # process timers that have expired and return the timeout based on the first non-expired timer
-        now = datetime.datetime.now()
 
-        for i in range(len(self.timers)):
+        # account for adding timers during loop
+        i = 0
+        while i < len(self.timers):
+            now = datetime.datetime.now()
             if self.timers[i].isafter(now):
-                return self.timers[i].secsremaining()
+                timeout = self.timers[i].secsremaining()
+                return timeout if timeout > 0 else None
 
             logging.debug("Executing timer {!r} ".format(self.timers[i].getname()))
+            timer = self.timers.pop(i)
             try:
-                self.timers[i].docommand()
+                timer.docommand()
             except Exception as e:
                 logging.warning("Failed to execute timer {!r}: {}".format(self.timers[i].getname(), e))
-            name, delay, reps, command = self.timers.pop(i).getdata()
+            name, delay, reps, command = timer.getdata()
 
             if reps > 0:
                 reps -= 1
@@ -28,34 +32,43 @@ class TimerSet(object):
             # note: delay is only re-applied after command has been executed and timer is re-added
             if reps != 0:
                 logging.debug("Re-adding timer {!r} with {} repetitions.".format(name, reps))
-                self.addtimer(name, delay, reps, command)
+                inserti = self.add(name, delay, reps, command, True)
+
+                # jump back if necessary
+                if inserti <= i:
+                    i = inserti
+                    continue
+
+            i += 1
 
         # no timers left, so no timeout required
         return None
 
-    def add(self, name, delay, reps, command):
+    def add(self, name, delay, reps, command, returnpos=False):
         logging.debug("Adding timer {!r} with {} seconds delay and {} repetitions.".format(name, delay, reps))
         time = datetime.datetime.now() + datetime.timedelta(seconds=delay)
 
         # insert timer such that timers are sorted by datetime, ascending
-        inserted = False
-        for i in range(len(self.timers)):
+        i = 0
+        while i < len(self.timers):
             if self.timers[i].isafter(time):
                 self.timers.insert(i, Timer(name, time, delay, reps, command))
-                inserted = True
-                break
+                return i if returnpos else True
 
-        if not inserted:
-            self.timers.append(Timer(name, time, delay, reps, command))
+            i += 1
 
-        return True
+        self.timers.append(Timer(name, time, delay, reps, command))
+        return len(self.timers) - 1 if returnpos else True
 
     def delete(self, name):
         logging.debug("Deleting timer {!r}.".format(name))
-        for i in range(len(self.timers)):
+        i = 0
+        while i < len(self.timers):
             if self.timers[i].isnamed(name):
                 self.timers.pop(i)
                 return True
+
+            i += 1
 
         logging.warning("Timer {!r} not found.".format(name))
         return False
