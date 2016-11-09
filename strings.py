@@ -78,3 +78,16 @@ def parseusermodes(modestring):
             modechanges[sign].add(c)
 
     return modechanges
+
+
+# string to lower
+
+# based on http://script.quakenet.org/wiki/ChallengeAuth
+def irclower(string):
+    string = string.lower()
+
+    symrep = {"[": "{", "]": "}", "\\": "|", "^": "~"}
+    for char, rep in symrep.items():
+        string = string.replace(char, rep)
+
+    return string

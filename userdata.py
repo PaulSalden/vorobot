@@ -192,6 +192,9 @@ class Channel(object):
     def __str__(self):
         return self.name
 
+    def equals(self, channelname):
+        return channelname == self.name
+
     def getnicks(self):
         return [self.userdata.nicks[n] for n in self.nicks]
 
@@ -206,6 +209,9 @@ class Nick(object):
 
     def __str__(self):
         return self.name
+
+    def equals(self, nickname):
+        return nickname == self.name
 
     def getchannels(self):
         return [self.userdata.channels[c] for c in self.channels]

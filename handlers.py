@@ -67,6 +67,33 @@ def onjoin(channelmatch):
     return wrap
 
 
+def onnotice(textmatch, targetmatch):
+    def wrap(handler):
+        def wrapped(self, prefix, command, args):
+            if strings.isctcp(args[1]):
+                return
+
+            if not (re.match(targetmatch, args[0]) and re.match(textmatch, args[1])):
+                return
+
+            nick = self.id.nick(strings.getnick(prefix), prefix)
+
+            if strings.ischannel(args[0]):
+                target = self.id.channel(args[0])
+            else:
+                target = self.id.nick(args[0])
+
+            # (self, nick, target, msg)
+            newargs = (self, nick, target, args[1])
+            return handler(*newargs)
+
+        wrapped.ishandler = True
+        wrapped.command = "NOTICE"
+        return wrapped
+
+    return wrap
+
+
 def ontext(textmatch, targetmatch):
     def wrap(handler):
         def wrapped(self, prefix, command, args):

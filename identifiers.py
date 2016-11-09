@@ -1,3 +1,6 @@
+import strings
+
+
 class IdentifierSet(object):
     def __init__(self, userdata):
         self.userdata = userdata
@@ -13,3 +16,6 @@ class IdentifierSet(object):
 
     def me(self):
         return self.userdata.getme()
+
+    def irclower(self, string):
+        return strings.irclower(string)

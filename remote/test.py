@@ -3,10 +3,6 @@ import remotes
 
 
 class MyRemote(remotes.Remote):
-    @handlers.onconnect
-    def connecthandler(self):
-        self.cmd.join("#vorobottest")
-
     @handlers.ontext(":test", "#")
     def texthandler(self, nick, target, msg):
         #modestring = "".join(nick.chanmodes(target))
