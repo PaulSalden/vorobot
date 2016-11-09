@@ -17,10 +17,7 @@ class Auths(remotes.Remote):
         self.whoid = random.randint(1, 999)
         self.whos = set()
         self.unauthed = set()
-
-    @handlers.onconnect
-    def connecthandler(self):
-        self.cmd.timer("authwho", WHODELAY, 0, self.checkunauthed)
+        self.timer = False
 
     @handlers.onjoin("#")
     def joinhandler(self, nick, channel):
@@ -33,6 +30,14 @@ class Auths(remotes.Remote):
     def endofwhohandler(self, *args):
         whoid = args[0].split(",")[-1]
         self.whos.discard(whoid)
+
+        # start/stop timer as necessary
+        if self.unauthed and not self.timer:
+            self.timer = True
+            self.cmd.timer("authwho", WHODELAY, 0, self.checkunauthed)
+        elif not self.unauthed and self.timer:
+            self.timer = False
+            self.cmd.timerdel("authwho")
 
     @handlers.raw("354", "")
     def whohandler(self, *args):
