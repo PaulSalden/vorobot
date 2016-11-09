@@ -7,6 +7,7 @@ import remotes
 # (note: It would be better to calculate the command length, but that would then also require combining
 # the optimal nicks etc. It is chosen to keep this simple.)
 MAXTARGETS = 20
+# delay in seconds between WHO commands on previously unauthed users
 WHODELAY = 60
 
 
