@@ -3,7 +3,7 @@ import select
 import socket
 import time
 import remotes
-from config import settings as defaultsettings
+from config.bot import settings as defaultsettings
 from errno import WSAEWOULDBLOCK  # EINPROGRESS
 from strings import encode, decode
 
