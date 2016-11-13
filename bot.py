@@ -29,33 +29,6 @@ class Bot(object):
 
     # --- make and maintain connection ---
 
-    async def connect(self):
-        # make sure queues, buffers, etc. are reset
-        self.readbuffer = b""
-        self.buffer_out = b""
-        self.send_queue = []
-
-        self.allow_send = True
-        self.bytes_buffered = 0
-
-        self.connect_success = False
-
-        try:
-            self.reader, self.writer = await asyncio.open_connection(self.settings['server'],
-                                                                     int(self.settings['port']),
-                                                                     loop=self.loop)
-
-        except socket.error as e:
-            message = e.args[0]
-            if message != WSAEWOULDBLOCK:
-                logging.warning("Could not make connection: {}".format(message))
-                return False
-
-        self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
-        self.send("NICK {}".format(self.settings['desired_nick']))
-
-        return True
-
     async def mainloop(self):
         failed = 0
         # keep on trying to connect
@@ -85,6 +58,33 @@ class Bot(object):
                 delay = 10**failed
                 logging.info("Reconnecting in {} seconds.".format(delay))
                 await asyncio.sleep(delay)
+
+    async def connect(self):
+        # make sure queues, buffers, etc. are reset
+        self.readbuffer = b""
+        self.buffer_out = b""
+        self.send_queue = []
+
+        self.allow_send = True
+        self.bytes_buffered = 0
+
+        self.connect_success = False
+
+        try:
+            self.reader, self.writer = await asyncio.open_connection(self.settings['server'],
+                                                                     int(self.settings['port']),
+                                                                     loop=self.loop)
+
+        except socket.error as e:
+            message = e.args[0]
+            if message != WSAEWOULDBLOCK:
+                logging.warning("Could not make connection: {}".format(message))
+                return False
+
+        self.send("USER {} * * :{}".format(self.settings['username'], self.settings['realname']))
+        self.send("NICK {}".format(self.settings['desired_nick']))
+
+        return True
 
     # --- receive and send data ---
 
