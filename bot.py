@@ -19,7 +19,7 @@ class Bot(object):
         self.reader = None
         self.writer = None
 
-        self.readbuffer = b""
+        self.read_buffer = b""
         self.send_queue = []
 
         self.allow_send = True
@@ -61,7 +61,7 @@ class Bot(object):
 
     async def connect(self):
         # make sure queues, buffers, etc. are reset
-        self.readbuffer = b""
+        self.read_buffer = b""
         self.buffer_out = b""
         self.send_queue = []
 
@@ -95,10 +95,10 @@ class Bot(object):
             # assume disconnect
             return False
 
-        self.readbuffer += data
-        encoded_lines = self.readbuffer.split(b"\r\n")
+        self.read_buffer += data
+        encoded_lines = self.read_buffer.split(b"\r\n")
         # leave incomplete lines in buffer
-        self.readbuffer = encoded_lines.pop(-1)
+        self.read_buffer = encoded_lines.pop(-1)
 
         for encoded_line in encoded_lines:
             line = decode(encoded_line)
