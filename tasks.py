@@ -40,6 +40,14 @@ class TaskSet(object):
         timer = self.timers.pop(name)
         timer.cancel()
 
-    def addbgprocess(self, command):
-        pass
-        #loop.run_in_executor(None, myslowfunc)
+    def dobgprocess(self, command):
+        message = "Executing background process."
+        logging.debug(message)
+
+        async def bgprocess():
+            try:
+                command()
+            except Exception as e:
+                logging.warning("Failed to execute background process: {}".format(e))
+
+        self.loop.run_in_executor(None, bgprocess())
