@@ -8,9 +8,6 @@ class TaskSet(object):
         self.timers = {}
 
     def addtimer(self, name, delay, reps, command):
-        message = "Adding timer {!r} with {} seconds delay and {} repetitions."
-        logging.debug(message.format(name, delay, reps))
-
         async def timerprocess():
             # treat unlimited reps as a negative number
             i = reps if reps != 0 else -1
@@ -29,6 +26,8 @@ class TaskSet(object):
             if name in self.timers:
                 del self.timers[name]
 
+        message = "Adding timer {!r} with {} seconds delay and {} repetitions."
+        logging.debug(message.format(name, delay, reps))
         self.timers[name] = asyncio.ensure_future(timerprocess(), loop=self.loop)
 
     def removetimer(self, name):
@@ -41,13 +40,15 @@ class TaskSet(object):
         timer.cancel()
 
     def dobgprocess(self, command):
-        message = "Executing background process."
-        logging.debug(message)
-
-        async def bgprocess():
+        def bgprocess():
             try:
                 command()
             except Exception as e:
                 logging.warning("Failed to execute background process: {}".format(e))
 
-        self.loop.run_in_executor(None, bgprocess())
+        async def bgroutine():
+            await self.loop.run_in_executor(None, bgprocess)
+            logging.debug("Finished executing background process.")
+
+        logging.debug("Executing background process.")
+        asyncio.ensure_future(bgroutine(), loop=self.loop)
