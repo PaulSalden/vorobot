@@ -192,6 +192,9 @@ class Channel(object):
     def __str__(self):
         return self.name
 
+    def ischannel(self):
+        return True
+
     def equals(self, channelname):
         return channelname == self.name
 
@@ -209,6 +212,9 @@ class Nick(object):
 
     def __str__(self):
         return self.name
+
+    def ischannel(self):
+        return False
 
     def equals(self, nickname):
         return nickname == self.name
