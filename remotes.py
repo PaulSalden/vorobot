@@ -170,9 +170,6 @@ class RemoteSet(object):
                             msg = "Could not process command handler for {!r} in module {!r} / remote {!r}: {}"
                             logging.warning(msg.format(command, modulename, remotename, e))
 
-    def processtimers(self):
-        return self.timers.process()
-
     def signal(self, name, args):
         self.process("{}!".format(name), "_SIGNAL", args)
 
