@@ -1,7 +1,7 @@
 class CommandSet(object):
-    def __init__(self, sendcommand, timers):
+    def __init__(self, sendcommand, tasks):
         self.send = sendcommand
-        self.timers = timers
+        self.tasks = tasks
 
     def raw(self, command):
         self.send(command)
@@ -109,7 +109,8 @@ class CommandSet(object):
     # --- timer commands ---
 
     def timer(self, *args):
-        self.timers.add(*args)
+        self.tasks.addtimer(*args)
+        pass
 
     def timerdel(self, *args):
-        self.timers.delete(*args)
+        self.tasks.removetimer(*args)

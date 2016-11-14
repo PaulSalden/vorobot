@@ -3,7 +3,6 @@ import inspect
 import logging
 import commands
 import identifiers
-import timers
 import userdata
 
 MODULEPATH = "remote."
@@ -12,12 +11,11 @@ MODULEPATH = "remote."
 # NOTE: modules are the files remote classes reside in
 
 class RemoteSet(object):
-    def __init__(self, send):
+    def __init__(self, send, tasks):
         self.modules = {}
         self.handlers = {}
 
-        self.timers = timers.TimerSet()
-        self.cmd = commands.CommandSet(send, self.timers)
+        self.cmd = commands.CommandSet(send, tasks)
         self.aliases = {}
         self.variables = {}
         self.userdata = userdata.UserData()
