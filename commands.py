@@ -106,7 +106,7 @@ class CommandSet(object):
     def ctcpreply(self, target, request, msg):
         self.notice(target, "\001{} {}\001".format(request.upper(), msg))
 
-    # --- timer commands ---
+    # --- task commands ---
 
     def timer(self, *args):
         self.tasks.addtimer(*args)
@@ -114,3 +114,6 @@ class CommandSet(object):
 
     def timerdel(self, *args):
         self.tasks.removetimer(*args)
+
+    def bgprocess(self, command):
+        self.tasks.dobgprocess(command)
