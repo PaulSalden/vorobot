@@ -123,7 +123,7 @@ class CommandSet(object):
     # --- module loading/unloading ---
 
     def loadremote(self, *args):
-        self.loadcommand(*args)
+        return self.loadcommand(*args)
 
     def unloadremote(self, *args):
-        self.unloadcommand(*args)
+        return self.unloadcommand(*args)
