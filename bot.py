@@ -51,6 +51,8 @@ class Bot(object):
                         # send _DISCONNECT pseudo-command for all loaded modules
                         self.remoteset.process("", "_DISCONNECT", "")
 
+                        break
+
             # exponentially delay reconnect if previous attempt(s) was/were unsuccessful
             if self.connect_success:
                 failed = 0
