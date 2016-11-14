@@ -15,7 +15,7 @@ class RemoteSet(object):
         self.modules = {}
         self.handlers = {}
 
-        self.cmd = commands.CommandSet(send, tasks)
+        self.cmd = commands.CommandSet(send, tasks, self.loadremote, self.unloadremote)
         self.aliases = {}
         self.variables = {}
         self.userdata = userdata.UserData()

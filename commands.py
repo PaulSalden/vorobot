@@ -1,7 +1,9 @@
 class CommandSet(object):
-    def __init__(self, sendcommand, tasks):
+    def __init__(self, sendcommand, tasks, loadcommand, unloadcommand):
         self.send = sendcommand
         self.tasks = tasks
+        self.loadcommand = loadcommand
+        self.unloadcommand = unloadcommand
 
     def raw(self, command):
         self.send(command)
@@ -117,3 +119,11 @@ class CommandSet(object):
 
     def bgprocess(self, command):
         self.tasks.dobgprocess(command)
+
+    # --- module loading/unloading ---
+
+    def loadremote(self, *args):
+        self.loadcommand(*args)
+
+    def unloadremote(self, *args):
+        self.unloadcommand(*args)
