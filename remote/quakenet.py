@@ -3,6 +3,7 @@ import hmac
 import random
 import handlers
 import remotes
+import strings
 from config.quakenet import settings
 
 
@@ -52,6 +53,51 @@ class Connect(remotes.Remote):
 
             if channels:
                 self.cmd.join(channels)
+
+# --------------------------------------------------
+
+
+class Control(remotes.Remote):
+    @handlers.ontext("^:load", "")
+    def loadhandler(self, nick, target, msg):
+        if nick.name in settings["admins"]:
+            target = target if target.ischannel() else nick
+
+            words = msg.split()
+            if len(words) not in [2, 3]:
+                self.cmd.msg(target, "usage = :unload <module> [remote1,remote2,...]")
+                return
+
+            module = words[1]
+            remotelist = None if len(words) == 2 else words[2].split(",")
+            loaded = self.cmd.loadremote(module, remotelist)
+
+            if loaded:
+                response = "loaded module {!r} / remotes {!r}"
+                self.cmd.msg(target, response.format(module, ", ".join(loaded)))
+            else:
+                self.cmd.msg(target, "could not load remotes")
+
+    @handlers.ontext("^:unload", "")
+    def unloadhandler(self, nick, target, msg):
+        if nick.name in settings["admins"]:
+            target = target if target.ischannel() else nick
+
+            words = msg.split()
+            if len(words) not in [2, 3]:
+                self.cmd.msg(target, "usage = :unload <module> [remote1,remote2,...]")
+                return
+
+            module = words[1]
+            remotelist = None if len(words) == 2 else words[2].split(",")
+            unloaded = self.cmd.unloadremote(module, remotelist)
+
+            if unloaded:
+                response = "unloaded module {!r} / remotes {!r}"
+                self.cmd.msg(target, response.format(module, ", ".join(unloaded)))
+            else:
+                self.cmd.msg(target, "could not unload remotes")
+
 
 # --------------------------------------------------
 
