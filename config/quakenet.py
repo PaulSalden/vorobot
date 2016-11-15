@@ -1,5 +1,6 @@
 settings = {
-    "authname": "authname",
-    "password": "authpw",
-    "channels": "#pwnagedeluxe"
+    "authname": "myauth",
+    "password": "mypassword",
+    "channels": "#pwnagedeluxe",
+    "admins": ["adminauth"],
 }
