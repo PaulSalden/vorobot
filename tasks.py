@@ -35,7 +35,7 @@ class TaskSet(object):
             logging.warning("Timer {!r} not found.".format(name))
             return
 
-        logging.debug("Deleting timer {!r}.".format(name))
+        logging.debug("Removing timer {!r}.".format(name))
         timer = self.timers.pop(name)
         timer.cancel()
 
