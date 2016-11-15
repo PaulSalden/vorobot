@@ -117,7 +117,8 @@ class RemoteSet(object):
 
         # if remotenames is not specified, unload all remotes in the module
         if not remotenames:
-            for remotename in self.handlers[modulename]:
+            # avoid modifying the dictionary being iterated over
+            for remotename in self.handlers[modulename].copy():
                 self._unloadhandlers(modulename, remotename)
                 unloadedremotes.append(remotename)
         else:
@@ -150,25 +151,38 @@ class RemoteSet(object):
     def process(self, prefix, command, args):
         self.userdata.process(prefix, command, args)
 
+        # copy handler references first, so they may unload modules
+        activerawhandlers = []
+        activehandlers = []
+
+        # ideally, the list of handlers per command would be 'cached'
         for modulename, remotedict in self.handlers.items():
             for remotename, handlers in remotedict.items():
-                # process raw handlers
+                # raw handlers
                 if "_RAW" in handlers:
                     for handler in handlers["_RAW"]:
-                        try:
-                            handler(prefix, command, args)
-                        except Exception as e:
-                            msg = "Could not process raw handler for command {!r} in module {!r} / remote {!r}: {}"
-                            logging.warning(msg.format(command, modulename, remotename, e))
+                        activerawhandlers.append((handler, modulename, remotename))
 
-                # process command specific handlers
+                # command specific handlers
                 if command in handlers:
                     for handler in handlers[command]:
-                        try:
-                            handler(prefix, command, args)
-                        except Exception as e:
-                            msg = "Could not process command handler for {!r} in module {!r} / remote {!r}: {}"
-                            logging.warning(msg.format(command, modulename, remotename, e))
+                        activehandlers.append((handler, modulename, remotename))
+
+        for h in activerawhandlers:
+            handler, modulename, remotename = h
+            try:
+                handler(prefix, command, args)
+            except Exception as e:
+                msg = "Could not process raw handler for command {!r} in module {!r} / remote {!r}: {}"
+                logging.warning(msg.format(command, modulename, remotename, e))
+
+        for h in activehandlers:
+            handler, modulename, remotename = h
+            try:
+                handler(prefix, command, args)
+            except Exception as e:
+                msg = "Could not process command handler for {!r} in module {!r} / remote {!r}: {}"
+                logging.warning(msg.format(command, modulename, remotename, e))
 
     def signal(self, name, args):
         self.process("{}!".format(name), "_SIGNAL", args)
