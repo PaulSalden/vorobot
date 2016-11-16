@@ -12,8 +12,9 @@ MODULEPATH = "remote."
 
 class RemoteSet(object):
     def __init__(self, send, tasks):
-        self.modules = {}
-        self.handlers = {}
+        self.modules = {}  # used to keep track of loaded modules
+        self.remotes = {}  # used to keep track of loaded remotes and handlers per remote
+        self.handlers = {}  # used to look up handlers for incoming commands
 
         self.cmd = commands.CommandSet(send, tasks, self.loadremote, self.unloadremote)
         self.aliases = {}
@@ -35,8 +36,6 @@ class RemoteSet(object):
             for cname in dir(module):
                 c = getattr(module, cname)
                 if inspect.isclass(c) and issubclass(c, Remote):  # could use isinstance() but avoiding confusion
-                    getnick = self.userdata.getnick
-                    getchannel = self.userdata.getchannel
                     remote = c(self.cmd, self.id, self.aliases, self.variables)
                     self._loadhandlers(modulename, cname, remote)
                     loadedremotes.append(cname)
@@ -46,8 +45,6 @@ class RemoteSet(object):
                 if cname in dir(module):
                     c = getattr(module, cname)
                     if inspect.isclass(c) and issubclass(c, Remote):
-                        getnick = self.userdata.getnick
-                        getchannel = self.userdata.getchannel
                         remote = c(self.cmd, self.id, self.aliases, self.variables)
                         self._loadhandlers(modulename, cname, remote)
                         loadedremotes.append(cname)
@@ -69,7 +66,7 @@ class RemoteSet(object):
                 logging.warning(warning.format(modulename, e))
                 return False
 
-            self.handlers[modulename] = {}
+            self.remotes[modulename] = {}
         else:
             try:
                 importlib.reload(self.modules[modulename])
@@ -88,12 +85,22 @@ class RemoteSet(object):
             if hasattr(c, "ishandler"):
                 command = getattr(c, "command")
 
+                # add handlers to remotes dict
                 if command not in handlers:
                     handlers[command] = [c]
                 else:
                     handlers[command].append(c)
 
-        self.handlers[modulename][remotename] = handlers
+                # add handlers to handlers dict
+                if remotename in self.remotes[modulename]:
+                    self._removehandlersfromdict(modulename, remotename)
+
+                if command not in self.handlers:
+                    self.handlers[command] = [c]
+                else:
+                    self.handlers[command].append(c)
+
+        self.remotes[modulename][remotename] = handlers
 
         # execute onload()
         if "_LOAD" in handlers:
@@ -110,7 +117,7 @@ class RemoteSet(object):
         # module stays imported
         unloadedremotes = []
 
-        if modulename not in self.handlers:
+        if modulename not in self.remotes:
             warning = "No loaded module {!r}."
             logging.warning(warning.format(modulename))
             return unloadedremotes
@@ -118,12 +125,12 @@ class RemoteSet(object):
         # if remotenames is not specified, unload all remotes in the module
         if not remotenames:
             # avoid modifying the dictionary being iterated over
-            for remotename in self.handlers[modulename].copy():
+            for remotename in self.remotes[modulename].copy():
                 self._unloadhandlers(modulename, remotename)
                 unloadedremotes.append(remotename)
         else:
             for remotename in remotenames:
-                if remotename not in self.handlers[modulename]:
+                if remotename not in self.remotes[modulename]:
                     warning = "Remote {!r} for module {!r} not loaded."
                     logging.warning(warning.format(remotename, modulename))
                 else:
@@ -136,7 +143,7 @@ class RemoteSet(object):
         # not meant to be called directly
 
         # execute onunload()
-        handlers = self.handlers[modulename][remotename]
+        handlers = self.remotes[modulename][remotename]
         if "_UNLOAD" in handlers:
             for h in handlers["_UNLOAD"]:
                 try:
@@ -145,44 +152,47 @@ class RemoteSet(object):
                     warning = "Could not process onunload handler for module {!r} / remote {!r}: {}"
                     logging.warning(warning.format(modulename, remotename, e))
 
-        del self.handlers[modulename][remotename]
+        self._removehandlersfromdict(modulename, remotename)
+
+        # remove handlers from remotes dict
+        del self.remotes[modulename][remotename]
         logging.info("Unloaded module {!r} / remote {!r}.".format(modulename, remotename))
+
+    def _removehandlersfromdict(self, modulename, remotename):
+        # not meant to be called directly
+
+        # remove handlers from handlers dict
+        for command, handlers in self.remotes[modulename][remotename].items():
+            for h in handlers:
+                self.handlers[command].remove(h)
+
+            if not self.handlers[command]:
+                del self.handlers[command]
 
     def process(self, prefix, command, args):
         self.userdata.process(prefix, command, args)
 
-        # copy handler references first, so they may unload modules
-        activerawhandlers = []
-        activehandlers = []
+        # raw handlers
+        if "_RAW" in self.handlers:
+            for h in self.handlers["_RAW"]:
+                try:
+                    h(prefix, command, args)
+                except Exception as e:
+                    # cannot obtain original function name because of decorators
+                    msg = "Could not process raw handler for command {!r} in module {!r} / remote {!r}: {}"
+                    logging.warning(msg.format(command, h.__self__.__module__.split(".")[-1],
+                                               h.__self__.__class__.__name__, e))
 
-        # ideally, the list of handlers per command would be 'cached'
-        for modulename, remotedict in self.handlers.items():
-            for remotename, handlers in remotedict.items():
-                # raw handlers
-                if "_RAW" in handlers:
-                    for handler in handlers["_RAW"]:
-                        activerawhandlers.append((handler, modulename, remotename))
-
-                # command specific handlers
-                if command in handlers:
-                    for handler in handlers[command]:
-                        activehandlers.append((handler, modulename, remotename))
-
-        for h in activerawhandlers:
-            handler, modulename, remotename = h
-            try:
-                handler(prefix, command, args)
-            except Exception as e:
-                msg = "Could not process raw handler for command {!r} in module {!r} / remote {!r}: {}"
-                logging.warning(msg.format(command, modulename, remotename, e))
-
-        for h in activehandlers:
-            handler, modulename, remotename = h
-            try:
-                handler(prefix, command, args)
-            except Exception as e:
-                msg = "Could not process command handler for {!r} in module {!r} / remote {!r}: {}"
-                logging.warning(msg.format(command, modulename, remotename, e))
+        # command specific handlers
+        if command in self.handlers:
+            for h in self.handlers[command]:
+                try:
+                    h(prefix, command, args)
+                except Exception as e:
+                    # cannot obtain original function name because of decorators
+                    msg = "Could not process command handler for {!r} in module {!r} / remote {!r}: {}"
+                    logging.warning(msg.format(command, h.__self__.__module__.split(".")[-1],
+                                               h.__self__.__class__.__name__, e))
 
     def signal(self, name, args):
         self.process("{}!".format(name), "_SIGNAL", args)
