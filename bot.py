@@ -1,15 +1,19 @@
 import asyncio
 import collections
+import errno
 import logging
 import socket
 import remotes
 import tasks
 from config.bot import settings as defaultsettings
-from errno import WSAEWOULDBLOCK  # EINPROGRESS
 from strings import encode, decode
 
 # flood control setting
 RECEIVE_QUEUE_SIZE = 1024
+
+
+# determine acceptable socket error
+ERR = errno.WSAEWOULDBLOCK if hasattr(errno, "WSAEWOULDBLOCK") else errno.EINPROGRESS
 
 
 class Bot(object):
@@ -83,7 +87,7 @@ class Bot(object):
 
         except socket.error as e:
             message = e.args[0]
-            if message != WSAEWOULDBLOCK:
+            if message != ERR:
                 logging.warning("Could not make connection: {}".format(message))
                 return False
 
