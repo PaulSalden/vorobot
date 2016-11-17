@@ -62,7 +62,7 @@ class RemoteSet(object):
             try:
                 self.modules[modulename] = importlib.import_module(MODULEPATH + modulename)
             except Exception as e:
-                warning = "Could not import module !r}: {}"
+                warning = "Could not import module {!r}: {}"
                 logging.warning(warning.format(modulename, e))
                 return False
 
@@ -79,6 +79,11 @@ class RemoteSet(object):
 
     def _loadhandlers(self, modulename, remotename, remote):
         # not meant to be called directly
+
+        # if handlers were previously loaded, unload them
+        if remotename in self.remotes[modulename]:
+            self._removehandlersfromdict(modulename, remotename)
+
         handlers = {}
         for cname in dir(remote):
             c = getattr(remote, cname)
@@ -92,9 +97,6 @@ class RemoteSet(object):
                     handlers[command].append(c)
 
                 # add handlers to handlers dict
-                if remotename in self.remotes[modulename]:
-                    self._removehandlersfromdict(modulename, remotename)
-
                 if command not in self.handlers:
                     self.handlers[command] = [c]
                 else:
