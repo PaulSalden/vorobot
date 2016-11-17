@@ -118,7 +118,7 @@ class UserData(object):
             self.channels[args[0]] = Channel(self, args[0])
 
         nickname = strings.getnick(prefix)
-        self.addtochannel(args[0], nickname, [], prefix)
+        self.addtochannel(args[0], nickname, set(), prefix)
 
     def handlekick(self, prefix, args):
         if args[1] == self.me:
