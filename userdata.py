@@ -97,7 +97,7 @@ class UserData(object):
 
         # remove nick if no common channels are left
         if not nick.channels:
-            del self.nicks[nick]
+            del self.nicks[nickname]
 
     # --- handlers ---
 
