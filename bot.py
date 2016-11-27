@@ -45,8 +45,13 @@ class Bot(object):
             if await self.connect():
                 send_future = asyncio.ensure_future(self.sendloop(), loop=self.loop)
                 while True:
-                    connected = await self.receive_data()
+                    try:
+                        connected = await self.receive_data()
+                    except ConnectionError as e:
+                        connected = ""
+                        logging.warning("Connection error: {}".format(e))
 
+                    # handle both empty received string and connection error
                     if not connected:
                         logging.warning("Disconnected.")
                         send_future.cancel()
